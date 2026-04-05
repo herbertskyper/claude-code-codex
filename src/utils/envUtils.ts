@@ -2,13 +2,32 @@ import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { join } from 'path'
 
+const V666_CONFIG_DIRNAME = '.claude-666'
+
+function isV666Build(): boolean {
+  return process.env.CLAUDE_CODE_V666_BUILD === '1'
+}
+
+function getDefaultClaudeConfigDir(): string {
+  const configuredDir = process.env.CLAUDE_CONFIG_DIR?.trim()
+  if (configuredDir) {
+    return configuredDir
+  }
+  if (isV666Build()) {
+    return join(homedir(), V666_CONFIG_DIRNAME)
+  }
+  return join(homedir(), '.claude')
+}
+
+if (!process.env.CLAUDE_CONFIG_DIR && isV666Build()) {
+  process.env.CLAUDE_CONFIG_DIR = getDefaultClaudeConfigDir()
+}
+
 // Memoized: 150+ callers, many on hot paths. Keyed off CLAUDE_CONFIG_DIR so
 // tests that change the env var get a fresh value without explicit cache.clear.
 export const getClaudeConfigHomeDir = memoize(
   (): string => {
-    return (
-      process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude')
-    ).normalize('NFC')
+    return getDefaultClaudeConfigDir().normalize('NFC')
   },
   () => process.env.CLAUDE_CONFIG_DIR,
 )

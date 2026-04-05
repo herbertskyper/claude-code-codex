@@ -9,3 +9,5 @@ coverage
 *.suo
 *.lock
 src/utils/vendor/
+.tmp-codex-cli/
+.tmp-codex-inspect/

@@ -328,6 +328,8 @@ describe("getClaudeConfigHomeDir", () => {
   test("returns a string ending with .claude by default", () => {
     delete process.env.CLAUDE_CONFIG_DIR;
     const result = getClaudeConfigHomeDir();
-    expect(result).toMatch(/\.claude$/);
+    const expectedSuffix =
+      process.env.CLAUDE_CODE_V666_BUILD === "1" ? ".claude-666" : ".claude";
+    expect(result).toMatch(new RegExp(`${expectedSuffix.replace(".", "\\.")}$`));
   });
 });

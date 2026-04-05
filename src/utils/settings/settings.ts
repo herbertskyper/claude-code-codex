@@ -271,6 +271,42 @@ function getUserSettingsFilePath(): string {
   return 'settings.json'
 }
 
+function shouldBootstrapV666UserSettings(
+  source: SettingSource,
+  filePath: string | undefined,
+): filePath is string {
+  return !!(
+    source === 'userSettings' &&
+    filePath &&
+    process.env.CLAUDE_CODE_V666_BUILD === '1' &&
+    !getFsImplementation().existsSync(filePath)
+  )
+}
+
+function bootstrapV666UserSettingsIfNeeded(source: SettingSource): void {
+  const filePath = getSettingsFilePathForSource(source)
+  if (!shouldBootstrapV666UserSettings(source, filePath)) {
+    return
+  }
+
+  const seededSettings: SettingsJson = {
+    modelType: 'openai',
+    env: {
+      OPENAI_USE_CODEX_CLI: '1',
+      OPENAI_MODEL: 'gpt-5.4',
+      OPENAI_API_KEY: '',
+      OPENAI_BASE_URL: '',
+    },
+  }
+
+  getFsImplementation().mkdirSync(dirname(filePath))
+  markInternalWrite(filePath)
+  writeFileSyncAndFlush_DEPRECATED(
+    filePath,
+    jsonStringify(seededSettings, null, 2) + '\n',
+  )
+}
+
 export function getSettingsFilePathForSource(
   source: SettingSource,
 ): string | undefined {
@@ -319,6 +355,8 @@ export function getSettingsForSource(
 function getSettingsForSourceUncached(
   source: SettingSource,
 ): SettingsJson | null {
+  bootstrapV666UserSettingsIfNeeded(source)
+
   // For policySettings: first source wins (remote > HKLM/plist > file > HKCU)
   if (source === 'policySettings') {
     const remoteSettings = getRemoteManagedSettingsSyncFromCache()

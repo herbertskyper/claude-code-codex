@@ -333,6 +333,11 @@ export function isOpus1mMergeEnabled(): boolean {
 }
 
 export function renderModelSetting(setting: ModelName | ModelAlias): string {
+  const openAIModelDisplayName = getConfiguredOpenAIModelDisplayName()
+  if (openAIModelDisplayName) {
+    return openAIModelDisplayName
+  }
+
   if (setting === 'opusplan') {
     return 'Opus Plan'
   }
@@ -340,6 +345,32 @@ export function renderModelSetting(setting: ModelName | ModelAlias): string {
     return capitalize(setting)
   }
   return renderModelName(setting)
+}
+
+function formatOpenAIModelDisplayName(model: string): string {
+  const trimmed = model.trim()
+  if (!trimmed) return 'OpenAI'
+  if (/^gpt-/i.test(trimmed)) {
+    return trimmed.replace(/^gpt-/i, 'GPT-')
+  }
+  return trimmed
+}
+
+export function getConfiguredOpenAIModelDisplayName(): string | null {
+  if (getAPIProvider() !== 'openai') {
+    return null
+  }
+
+  const configuredModel = process.env.OPENAI_MODEL?.trim()
+  if (configuredModel) {
+    return formatOpenAIModelDisplayName(configuredModel)
+  }
+
+  if (isEnvTruthy(process.env.OPENAI_USE_CODEX_CLI)) {
+    return 'GPT-5.4'
+  }
+
+  return null
 }
 
 // @[MODEL LAUNCH]: Add display name cases for the new model (base + [1m] variant if applicable).

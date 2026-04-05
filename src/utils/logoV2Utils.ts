@@ -3,12 +3,14 @@ import { stringWidth } from '../ink/stringWidth.js'
 import type { LogOption } from '../types/logs.js'
 import { getSubscriptionName, isClaudeAISubscriber } from './auth.js'
 import { getCwd } from './cwd.js'
+import { isEnvTruthy } from './envUtils.js'
 import { getDisplayPath } from './file.js'
 import {
   truncate,
   truncateToWidth,
   truncateToWidthNoEllipsis,
 } from './format.js'
+import { getAPIProvider } from './model/providers.js'
 import { getStoredChangelogFromMemory, parseChangelog } from './releaseNotes.js'
 import { gt } from './semver.js'
 import { loadMessageLogs } from './sessionStorage.js'
@@ -253,9 +255,14 @@ export function getLogoDisplayData(): {
   const cwd = serverUrl
     ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}`
     : displayPath
-  const billingType = isClaudeAISubscriber()
-    ? getSubscriptionName()
-    : 'API Usage Billing'
+  const billingType =
+    getAPIProvider() === 'openai'
+      ? isEnvTruthy(process.env.OPENAI_USE_CODEX_CLI)
+        ? 'ChatGPT OAuth (Codex CLI)'
+        : 'OpenAI Compatible API'
+      : isClaudeAISubscriber()
+        ? getSubscriptionName()
+        : 'API Usage Billing'
   const agentName = getInitialSettings().agent
 
   return {

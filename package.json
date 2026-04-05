@@ -1,6 +1,6 @@
 {
-  "name": "claude-code-best",
-  "version": "1.1.0",
+  "name": "claude-code-666-local",
+  "version": "666.0.0-V666",
   "description": "Reverse-engineered Anthropic Claude Code CLI — interactive AI coding assistant in the terminal",
   "type": "module",
   "author": "claude-code-best <claude-code-best@proton.me>",
@@ -25,8 +25,9 @@
     "bun": ">=1.2.0"
   },
   "bin": {
-    "ccb": "dist/cli.js",
-    "claude-code-best": "dist/cli.js"
+    "claude-code-codex": "dist/cli.js",
+    "ccb666": "dist/cli.js",
+    "claude-code-v666": "dist/cli.js"
   },
   "workspaces": [
     "packages/*",
@@ -48,6 +49,7 @@
     "test": "bun test",
     "check:unused": "knip-bun",
     "health": "bun run scripts/health-check.ts",
+    "install:launcher": "powershell -ExecutionPolicy Bypass -File scripts/install-global-launchers.ps1",
     "postinstall": "node dist/download-ripgrep.js || bun run scripts/download-ripgrep.ts || true",
     "docs:dev": "npx mintlify dev"
   },

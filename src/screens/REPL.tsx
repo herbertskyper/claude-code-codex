@@ -3537,6 +3537,7 @@ export function REPL({
           })
         },
         onStreamingText,
+        setSpinnerMessage,
       )
     },
     [
@@ -3546,6 +3547,7 @@ export function REPL({
       setStreamingToolUses,
       setStreamingThinking,
       onStreamingText,
+      setSpinnerMessage,
     ],
   )
 

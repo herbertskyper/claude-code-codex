@@ -1,5 +1,41 @@
 #!/usr/bin/env bun
 import { feature } from 'bun:bundle'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
+import { homedir } from 'os'
+import { dirname, join } from 'path'
+
+function bootstrapV666Config(): void {
+  process.env.CLAUDE_CODE_V666_BUILD ??= '1'
+
+  const configDir =
+    process.env.CLAUDE_CONFIG_DIR?.trim() || join(homedir(), '.claude-666')
+  process.env.CLAUDE_CONFIG_DIR = configDir
+
+  const settingsPath = join(configDir, 'settings.json')
+  if (existsSync(settingsPath)) {
+    return
+  }
+
+  mkdirSync(dirname(settingsPath), { recursive: true })
+  writeFileSync(
+    settingsPath,
+    JSON.stringify(
+      {
+        modelType: 'openai',
+        env: {
+          OPENAI_USE_CODEX_CLI: '1',
+          OPENAI_MODEL: 'gpt-5.4',
+          OPENAI_API_KEY: '',
+          OPENAI_BASE_URL: '',
+        },
+      },
+      null,
+      2,
+    ) + '\n',
+  )
+}
+
+bootstrapV666Config()
 
 // Bugfix for corepack auto-pinning, which adds yarnpkg to peoples' package.jsons
 // eslint-disable-next-line custom-rules/no-top-level-side-effects

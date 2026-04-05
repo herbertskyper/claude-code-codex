@@ -10,6 +10,10 @@ import { useTerminalNotification } from '../ink/useTerminalNotification.js'
 import { Box, Link, Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getSSLErrorHint } from '../services/api/errorUtils.js'
+import {
+  getCodexCliLoginStatus,
+  resolveCodexCliCommand,
+} from '../services/api/openai/codexCli.js'
 import { sendNotification } from '../services/notifier.js'
 import { OAuthService } from '../services/oauth/index.js'
 import { getOauthAccountInfo, validateForceLoginOrg } from '../utils/auth.js'
@@ -48,6 +52,7 @@ type OAuthStatus =
       opusModel: string
       activeField: 'base_url' | 'api_key' | 'haiku_model' | 'sonnet_model' | 'opus_model'
     } // OpenAI Chat Completions API platform
+  | { state: 'checking_codex_cli_auth' }
   | { state: 'ready_to_start' } // Flow started, waiting for browser to open
   | { state: 'waiting_for_login'; url: string } // Browser opened, waiting for user to login
   | { state: 'creating_api_key' } // Got access token, creating API key
@@ -295,6 +300,61 @@ export function ConsoleOAuthFlow({
     }
   }, [oauthService, setShowPastePrompt, loginWithClaudeAi, mode, orgUUID])
 
+  const configureCodexCliAuth = useCallback(async () => {
+    setOAuthStatus({ state: 'checking_codex_cli_auth' })
+
+    try {
+      const command = resolveCodexCliCommand()
+      const status = await getCodexCliLoginStatus(command)
+
+      if (!status.loggedIn) {
+        setOAuthStatus({
+          state: 'error',
+          message:
+            'Codex CLI is not logged in. Run `codex login` and choose "Sign in with ChatGPT", then retry /login here.',
+          toRetry: { state: 'idle' },
+        })
+        return
+      }
+
+      const env: Record<string, string> = {
+        OPENAI_USE_CODEX_CLI: '1',
+        OPENAI_MODEL: 'gpt-5.4',
+        OPENAI_API_KEY: '',
+        OPENAI_BASE_URL: '',
+      }
+
+      const { error } = updateSettingsForSource('userSettings', {
+        modelType: 'openai' as any,
+        env,
+      } as any)
+
+      if (error) {
+        setOAuthStatus({
+          state: 'error',
+          message: `Failed to save: ${error.message}`,
+          toRetry: { state: 'idle' },
+        })
+        return
+      }
+
+      for (const [key, value] of Object.entries(env)) {
+        process.env[key] = value
+      }
+      process.env.OPENAI_CODEX_CLI_PATH = command
+
+      setOAuthStatus({ state: 'success' })
+      void onDone()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      setOAuthStatus({
+        state: 'error',
+        message: `Failed to configure Codex OAuth: ${message}`,
+        toRetry: { state: 'idle' },
+      })
+    }
+  }, [onDone])
+
   const pendingOAuthStartRef = useRef(false)
 
   useEffect(() => {
@@ -399,6 +459,7 @@ export function ConsoleOAuthFlow({
           handleSubmitCode={handleSubmitCode}
           setOAuthStatus={setOAuthStatus}
           setLoginWithClaudeAi={setLoginWithClaudeAi}
+          configureCodexCliAuth={configureCodexCliAuth}
           onDone={onDone}
         />
       </Box>
@@ -421,6 +482,7 @@ type OAuthStatusMessageProps = {
   handleSubmitCode: (value: string, url: string) => void
   setOAuthStatus: (status: OAuthStatus) => void
   setLoginWithClaudeAi: (value: boolean) => void
+  configureCodexCliAuth: () => Promise<void>
 }
 
 function OAuthStatusMessage({
@@ -437,6 +499,7 @@ function OAuthStatusMessage({
   handleSubmitCode,
   setOAuthStatus,
   setLoginWithClaudeAi,
+  configureCodexCliAuth,
   onDone,
 }: OAuthStatusMessageProps): React.ReactNode {
   switch (oauthStatus.state) {
@@ -475,6 +538,16 @@ function OAuthStatusMessage({
                     </Text>
                   ),
                   value: 'openai_chat_api',
+                },
+                {
+                  label: (
+                    <Text>
+                      Codex / ChatGPT OAuth 路{' '}
+                      <Text dimColor>Use official Codex login with gpt-5.4</Text>
+                      {'\n'}
+                    </Text>
+                  ),
+                  value: 'codex_cli_oauth',
                 },
                 {
                   label: (
@@ -543,6 +616,9 @@ function OAuthStatusMessage({
                     opusModel: process.env.ANTHROPIC_DEFAULT_OPUS_MODEL ?? '',
                     activeField: 'base_url',
                   })
+                } else if (value === 'codex_cli_oauth') {
+                  logEvent('tengu_codex_cli_oauth_selected', {})
+                  void configureCodexCliAuth()
                 } else if (value === 'platform') {
                   logEvent('tengu_oauth_platform_selected', {})
                   setOAuthStatus({ state: 'platform_setup' })
@@ -758,6 +834,18 @@ function OAuthStatusMessage({
           </Box>
         )
       }
+
+    case 'checking_codex_cli_auth':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>Checking Codex / ChatGPT login…</Text>
+          <Spinner />
+          <Text dimColor>
+            Verifying the local Codex CLI login state and saving provider
+            settings.
+          </Text>
+        </Box>
+      )
 
     case 'openai_chat_api':
       {

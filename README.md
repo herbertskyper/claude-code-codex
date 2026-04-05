@@ -1,146 +1,198 @@
-# Claude Code Best V5 (CCB)
+# Claude Code Codex 666
 
-[![GitHub Stars](https://img.shields.io/github/stars/claude-code-best/claude-code?style=flat-square&logo=github&color=yellow)](https://github.com/claude-code-best/claude-code/stargazers)
-[![GitHub Contributors](https://img.shields.io/github/contributors/claude-code-best/claude-code?style=flat-square&color=green)](https://github.com/claude-code-best/claude-code/graphs/contributors)
-[![GitHub Issues](https://img.shields.io/github/issues/claude-code-best/claude-code?style=flat-square&color=orange)](https://github.com/claude-code-best/claude-code/issues)
-[![GitHub License](https://img.shields.io/github/license/claude-code-best/claude-code?style=flat-square)](https://github.com/claude-code-best/claude-code/blob/main/LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/claude-code-best/claude-code?style=flat-square&color=blue)](https://github.com/claude-code-best/claude-code/commits/main)
-[![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord)](https://discord.gg/qZU6zS7Q)
+这是我基于 Claude Code 源码思路，以及 [claude-code-best/claude-code](https://github.com/claude-code-best/claude-code) 继续二次开发的个人版本。
 
-> Which Claude do you like? The open source one is the best.
+来源说明：
 
-牢 A (Anthropic) 官方 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI 工具的源码反编译/逆向还原项目。目标是将 Claude Code 大部分功能及工程化能力复现 (问就是老佛爷已经付过钱了)。虽然很难绷, 但是它叫做 CCB(踩踩背)...
+- 底层能力与工程结构来源于 Claude Code 源码体系
+- 本仓库开发过程中参考了 [claude-code-best/claude-code](https://github.com/claude-code-best/claude-code) 的部分工程改造思路
 
-[文档在这里, 支持投稿 PR](https://ccb.agent-aura.top/)
+这份 README 主要记录我这个分支当前做了什么，以及怎么直接使用。
 
-[Discord 群组](https://discord.gg/qZU6zS7Q)
+## 我这个分支的重点改动
 
-- [x] V4 — 测试补全、[Buddy](https://ccb.agent-aura.top/docs/features/buddy)、[Auto Mode](https://ccb.agent-aura.top/docs/safety/auto-mode)、环境变量 Feature 开关
-- [x] V5 — [Sentry](https://ccb.agent-aura.top/docs/internals/sentry-setup) / [GrowthBook](https://ccb.agent-aura.top/docs/internals/growthbook-adapter) 企业监控、[自定义 Login](https://ccb.agent-aura.top/docs/features/custom-platform-login)、[OpenAI 兼容](https://ccb.agent-aura.top/docs/plans/openai-compatibility)、[Web Search](https://ccb.agent-aura.top/docs/features/web-browser-tool)、[Computer Use](https://ccb.agent-aura.top/docs/features/computer-use) / [Chrome Use](https://ccb.agent-aura.top/docs/features/claude-in-chrome-mcp)、[Voice Mode](https://ccb.agent-aura.top/docs/features/voice-mode)、[Bridge Mode](https://ccb.agent-aura.top/docs/features/bridge-mode)、[/dream 记忆整理](https://ccb.agent-aura.top/docs/features/auto-dream)
-- [ ] V6 — 大规模重构石山代码，全面模块分包（全新分支，main 封存为历史版本）
+- 增加 OpenAI 兼容链路
+- 增加通过官方 `Codex CLI` 复用 ChatGPT 登录态的接入方式
+- 默认模型切到 `gpt-5.4`
+- 增加独立隔离配置目录，避免污染原版 Claude Code
+- 增加全局启动器，支持在任意目录直接启动
+- 增加 Codex 重连中的实时进度提示，不再长时间无反馈
 
+## 当前版本
 
-## 快速开始(安装版)
+- 版本号：`666.0.0-V666`
+- 默认独立配置目录：`~/.claude-666`
+- 推荐全局启动命令：`ccb666`
+- 兼容启动命令：`claude-code-codex`、`claude-code-v666`
 
-不用克隆仓库, 从 NPM 下载后, 直接使用
+## 项目结构
 
-```sh
-bun  i -g claude-code-best
-bun pm -g trust claude-code-best
-ccb # 直接打开 claude code
-```
+和这次改动最相关的目录大致如下：
 
-国内对 github 网络较差的, 需要先设置这个环境变量
+- `src/entrypoints/cli.tsx`
+  入口启动。这里会为 `666` 版本注入独立配置目录，并在首启时写入默认的 `Codex CLI + gpt-5.4` 设置。
+- `src/services/api/openai/`
+  OpenAI 兼容链路所在目录。这次新增了 `codexCli.ts`，用来把官方 `codex` 命令接进现有请求流程。
+- `src/components/ConsoleOAuthFlow.tsx`
+  `/login` 界面逻辑。这里新增了 `Codex / ChatGPT OAuth` 登录选项。
+- `src/utils/model/` 和 `src/utils/logoV2Utils.ts`
+  模型显示、Logo 区域展示、当前 provider 文案。这里做了 `GPT-5.4` 和 `ChatGPT OAuth (Codex CLI)` 的显示适配。
+- `src/utils/messages.ts` 和 `src/screens/REPL.tsx`
+  流式消息处理和终端界面。这里接入了 Codex 重连进度提示。
+- `scripts/install-global-launchers.ps1`
+  Windows 全局启动器安装脚本。这里负责生成 `ccb666`、`claude-code-codex`、`claude-code-v666`。
+- `README.md` / `README_EN.md`
+  本分支自己的说明文档。
+
+## 这个分支相对原仓库的主要改动
+
+如果只看这次二次开发，核心变化可以概括为：
+
+- 增加 `Codex CLI` 后端桥接
+  关键文件：`src/services/api/openai/codexCli.ts`
+- 在 OpenAI provider 中增加走 `Codex CLI` 的分支
+  关键文件：`src/services/api/openai/index.ts`
+- 增加 `/login -> Codex / ChatGPT OAuth`
+  关键文件：`src/components/ConsoleOAuthFlow.tsx`
+- 增加 `666` 版本的独立配置目录和默认设置
+  关键文件：`src/entrypoints/cli.tsx`、`src/utils/envUtils.ts`、`src/utils/settings/settings.ts`
+- 增加模型与计费文案展示修正
+  关键文件：`src/utils/model/model.ts`、`src/utils/logoV2Utils.ts`
+- 增加重连中的实时等待提示
+  关键文件：`src/utils/messages.ts`、`src/screens/REPL.tsx`
+- 增加 Windows 全局启动命令
+  关键文件：`package.json`、`scripts/install-global-launchers.ps1`、`scripts/defines.ts`
+
+## 运行原理
+
+这条 ChatGPT 路线不是 `API Key` 调用，也不是网页抓 Cookie。
+
+它现在的方式是：
+
+- 先在本机用官方 `codex login` 登录 ChatGPT
+- 本项目运行时调用本机 `codex` 命令
+- 由官方 `Codex CLI` 自己管理认证状态
+- 本仓库只负责把它接进 Claude Code 这套交互壳里
+
+所以这套实现：
+
+- 不需要 `OPENAI_API_KEY`
+- 不在仓库里保存 ChatGPT Cookie
+- 不在仓库里保存浏览器 session
+- 不会把你的登录态写进项目源码文件
+
+## 安装要求
+
+- [Bun](https://bun.sh/) >= `1.3.11`
+- 本机可用的官方 `Codex CLI`
+
+先确认 Codex 已登录：
 
 ```bash
-DEFAULT_RELEASE_BASE=https://ghproxy.net/https://github.com/microsoft/ripgrep-prebuilt/releases/download/v15.0.1
+codex login
+codex login status
 ```
 
-## 快速开始(源码版)
+看到 `Logged in using ChatGPT` 再继续。
 
-### 环境要求
+如果你已经在 VS Code 插件、VS Code 终端，或者其他本机环境里登录过官方 Codex，并且 `codex login status` 能看到已登录状态，那么这里可以直接复用那份本机登录态，不需要重新登录。
 
-一定要最新版本的 bun 啊, 不然一堆奇奇怪怪的 BUG!!! bun upgrade!!!
+## 安装与构建
 
-- [Bun](https://bun.sh/) >= 1.3.11
-- 常规的配置 CC 的方式, 各大提供商都有自己的配置方式
-
-### 安装
+在仓库目录执行：
 
 ```bash
 bun install
-```
-
-国内对 github 网络较差的,可以使用这个环境变量
-
-```bash
-DEFAULT_RELEASE_BASE=https://ghproxy.net/https://github.com/microsoft/ripgrep-prebuilt/releases/download/v15.0.1
-```
-
-### 运行
-
-```bash
-# 开发模式, 看到版本号 888 说明就是对了
-bun run dev
-
-# 构建
 bun run build
+bun run install:launcher
 ```
 
-构建采用 code splitting 多文件打包（`build.ts`），产物输出到 `dist/` 目录（入口 `dist/cli.js` + 约 450 个 chunk 文件）。
-
-构建出的版本 bun 和 node 都可以启动, 你 publish 到私有源可以直接启动
-
-如果遇到 bug 请直接提一个 issues, 我们优先解决
-
-### 新人配置 /login
-
-首次运行后，在 REPL 中输入 `/login` 命令进入登录配置界面，选择 **Anthropic Compatible** 即可对接第三方 API 兼容服务（无需 Anthropic 官方账号）。
-
-需要填写的字段：
-
-| 字段 | 说明 | 示例 |
-|------|------|------|
-| Base URL | API 服务地址 | `https://api.example.com/v1` |
-| API Key | 认证密钥 | `sk-xxx` |
-| Haiku Model | 快速模型 ID | `claude-haiku-4-5-20251001` |
-| Sonnet Model | 均衡模型 ID | `claude-sonnet-4-6` |
-| Opus Model | 高性能模型 ID | `claude-opus-4-6` |
-
-- **Tab / Shift+Tab** 切换字段，**Enter** 确认并跳到下一个，最后一个字段按 Enter 保存
-
-
-> 支持所有 Anthropic API 兼容服务（如 OpenRouter、AWS Bedrock 代理等），只要接口兼容 Messages API 即可。
-
-## Feature Flags
-
-所有功能开关通过 `FEATURE_<FLAG_NAME>=1` 环境变量启用，例如：
+安装完成后，可以在任意目录直接启动：
 
 ```bash
-FEATURE_BUDDY=1 FEATURE_FORK_SUBAGENT=1 bun run dev
+ccb666
 ```
 
-各 Feature 的详细说明见 [`docs/features/`](docs/features/) 目录，欢迎投稿补充。
+也可以用：
 
-## VS Code 调试
+```bash
+claude-code-codex
+claude-code-v666
+```
 
-TUI (REPL) 模式需要真实终端，无法直接通过 VS Code launch 启动调试。使用 **attach 模式**：
+## 首次使用
 
-### 步骤
+1. 启动 `ccb666`
+2. 进入后执行 `/login`
+3. 选择 `Codex / ChatGPT OAuth`
+4. 如果提示未登录，先去终端执行一次 `codex login`
 
-1. **终端启动 inspect 服务**：
-   ```bash
-   bun run dev:inspect
-   ```
-   会输出类似 `ws://localhost:8888/xxxxxxxx` 的地址。
+首次启动后，本分支会默认使用独立配置目录：
 
-2. **VS Code 附着调试器**：
-   - 在 `src/` 文件中打断点
-   - F5 → 选择 **"Attach to Bun (TUI debug)"**
+```text
+~/.claude-666
+```
 
+不会动你原来的：
 
-## 相关文档及网站
+```text
+~/.claude
+```
 
-- **在线文档（Mintlify）**: [ccb.agent-aura.top](https://ccb.agent-aura.top/) — 文档源码位于 [`docs/`](docs/) 目录，欢迎投稿 PR
-- **DeepWiki**: <https://deepwiki.com/claude-code-best/claude-code>
+## 快速验收
 
-## Contributors
+可以直接跑一条非交互命令：
 
-<a href="https://github.com/claude-code-best/claude-code/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=claude-code-best/claude-code" />
-</a>
+```bash
+ccb666 --print "Reply with exactly OK"
+```
 
-## Star History
+预期输出：
 
-<a href="https://www.star-history.com/?repos=claude-code-best%2Fclaude-code&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=claude-code-best/claude-code&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=claude-code-best/claude-code&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=claude-code-best/claude-code&type=date&legend=top-left" />
- </picture>
-</a>
+```text
+OK
+```
 
-## 许可证
+## 交互体验补充
 
-本项目仅供学习研究用途。Claude Code 的所有权利归 [Anthropic](https://www.anthropic.com/) 所有。
+Codex 在某些情况下会先重连几次再正式返回结果。这个分支已经补了提示信息，等待时会看到类似：
+
+```text
+Connecting to ChatGPT OAuth...
+Codex reconnecting 1/5...
+Codex reconnecting 2/5...
+Codex falling back to HTTP...
+```
+
+这样就不是单纯卡住干等。
+
+## 开源注意事项
+
+我目前已经把本地临时目录加入忽略：
+
+- `.tmp-codex-cli/`
+- `.tmp-codex-inspect/`
+
+这套实现依赖本机 `Codex CLI` 登录态，但仓库本身不应提交下列内容：
+
+- `~/.codex/`
+- `~/.claude/`
+- `~/.claude-666/`
+- 任何导出的 cookie、token、session 文件
+
+另外再补一条：
+
+- `.vscode/launch.json` 如果保留，最好不要带你本机当前会话生成的调试 URL。我已经把仓库里的值改成了占位符 `ws://localhost:8888/replace-me`。
+
+当前仓库里我额外检查过几类内容：
+
+- `node_modules/`、`dist/`、`.env`、`.tmp-codex-cli/`、`.tmp-codex-inspect/` 都已被 `.gitignore` 忽略
+- `.claude/agents/hello-agent.md` 当前看起来只是示例 agent，不包含敏感信息
+- `.vscode/tasks.json` 是通用任务配置，可以上传
+- `.vscode/launch.json` 原先是本机临时调试地址，现在已去本地化
+
+## 免责声明
+
+本项目仅用于学习、研究与个人工程实验。
+
+Claude Code 相关能力与权利归其原始权利方所有。这里的二次开发内容仅代表本分支自身的工程改造。 

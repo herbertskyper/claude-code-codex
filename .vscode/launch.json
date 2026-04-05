@@ -5,7 +5,7 @@
 			"type": "bun",
 			"request": "attach",
 			"name": "Attach to Claude Code",
-			"url": "ws://localhost:8888/2dc3gzl5xot",
+			"url": "ws://localhost:8888/replace-me",
 			"preLaunchTask": "Start Claude Code TUI",
 			"stopOnEntry": false,
 			"internalConsoleOptions": "neverOpen"

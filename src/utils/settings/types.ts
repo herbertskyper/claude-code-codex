@@ -377,7 +377,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'API provider type. "anthropic" uses the Anthropic API (default), "openai" uses the OpenAI Chat Completions API (/v1/chat/completions). ' +
-            'When set to "openai", configure OPENAI_API_KEY, OPENAI_BASE_URL, and OPENAI_MODEL in env.',
+            'When set to "openai", configure OPENAI_API_KEY/OPENAI_BASE_URL/OPENAI_MODEL in env, or set OPENAI_USE_CODEX_CLI=1 to route requests through the local Codex CLI login.',
         ),
       model: z
         .string()

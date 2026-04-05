@@ -7,6 +7,7 @@ import { anthropicMessagesToOpenAI } from './convertMessages.js'
 import { anthropicToolsToOpenAI, anthropicToolChoiceToOpenAI } from './convertTools.js'
 import { adaptOpenAIStreamToAnthropic } from './streamAdapter.js'
 import { resolveOpenAIModel } from './modelMapping.js'
+import { isUsingCodexCliOpenAI, queryModelCodexCli } from './codexCli.js'
 import { normalizeMessagesForAPI } from '../../../utils/messages.js'
 import { toolToAPISchema } from '../../../utils/api.js'
 import { getEmptyToolPermissionContext } from '../../../Tool.js'
@@ -39,6 +40,11 @@ export async function* queryModelOpenAI(
   try {
     // 1. Resolve model name
     const openaiModel = resolveOpenAIModel(options.model)
+
+    if (isUsingCodexCliOpenAI()) {
+      yield* queryModelCodexCli(messages, systemPrompt, signal, openaiModel)
+      return
+    }
 
     // 2. Normalize messages using shared preprocessing
     const messagesForAPI = normalizeMessagesForAPI(messages, tools)

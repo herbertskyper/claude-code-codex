@@ -1,158 +1,196 @@
-# Claude Code Best V5 (CCB)
+# Claude Code Codex 666
 
-[![GitHub Stars](https://img.shields.io/github/stars/claude-code-best/claude-code?style=flat-square&logo=github&color=yellow)](https://github.com/claude-code-best/claude-code/stargazers)
-[![GitHub Contributors](https://img.shields.io/github/contributors/claude-code-best/claude-code?style=flat-square&color=green)](https://github.com/claude-code-best/claude-code/graphs/contributors)
-[![GitHub Issues](https://img.shields.io/github/issues/claude-code-best/claude-code?style=flat-square&color=orange)](https://github.com/claude-code-best/claude-code/issues)
-[![GitHub License](https://img.shields.io/github/license/claude-code-best/claude-code?style=flat-square)](https://github.com/claude-code-best/claude-code/blob/main/LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/claude-code-best/claude-code?style=flat-square&color=blue)](https://github.com/claude-code-best/claude-code/commits/main)
-[![Bun](https://img.shields.io/badge/runtime-Bun-black?style=flat-square&logo=bun)](https://bun.sh/)
+This is my personal modified branch built on top of Claude Code source ideas and [claude-code-best/claude-code](https://github.com/claude-code-best/claude-code).
 
-> Which Claude do you like? The open source one is the best.
+Source note:
 
-A reverse-engineered / decompiled source restoration of Anthropic's official [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI tool. The goal is to reproduce most of Claude Code's functionality and engineering capabilities. It's abbreviated as CCB.
+- The overall capability model and engineering direction come from the Claude Code source ecosystem
+- This branch also references parts of the engineering work in `claude-code-best`
 
-[Documentation (Chinese)](https://ccb.agent-aura.top/) — PR contributions welcome.
+This README focuses on what this branch adds and how to use it.
 
-Sponsor placeholder.
+## What this branch changes
 
-- [x] v1: Basic runability and type checking pass
-- [x] V2: Complete engineering infrastructure
-  - [ ] Biome formatting may not be implemented first to avoid code conflicts
-  - [x] Build pipeline complete, output runnable on both Node.js and Bun
-- [x] V3: Extensive documentation and documentation site improvements
-- [x] V4: Large-scale test suite for improved stability
-  - [x] Buddy pet feature restored [Docs](https://ccb.agent-aura.top/docs/features/buddy)
-  - [x] Auto Mode restored [Docs](https://ccb.agent-aura.top/docs/safety/auto-mode)
-  - [x] All features now configurable via environment variables instead of `bun --feature`
-- [x] V5: Enterprise-grade monitoring/reporting, missing tools补全, restrictions removed
-  - [x] Removed anti-distillation code
-  - [x] Web search capability (using Bing) [Docs](https://ccb.agent-aura.top/docs/features/web-browser-tool)
-  - [x] Debug mode support [Docs](https://ccb.agent-aura.top/docs/features/debug-mode)
-  - [x] Disabled auto-updates
-  - [x] Custom Sentry error reporting support [Docs](https://ccb.agent-aura.top/docs/internals/sentry-setup)
-  - [x] Custom GrowthBook support (GB is open source — configure your own feature flag platform) [Docs](https://ccb.agent-aura.top/docs/internals/growthbook-adapter)
-  - [x] Custom login mode — configure Claude models your way
-- [ ] V6: Large-scale refactoring, full modular packaging
-  - [ ] V6 will be a new branch; main branch will be archived as a historical version
+- Adds an OpenAI-compatible provider path
+- Adds ChatGPT OAuth reuse through the official local `Codex CLI`
+- Defaults the model route to `gpt-5.4`
+- Uses an isolated config directory so it does not touch your original Claude Code setup
+- Adds global launchers so it can be started from any folder
+- Surfaces Codex reconnect progress instead of silently waiting
 
-> I don't know how long this project will survive. Star + Fork + git clone + .zip is the safest bet.
->
-> This project updates rapidly — Opus continuously optimizes in the background, with new changes almost every few hours.
->
-> Claude has burned over $1000, out of budget, switching to GLM to continue; @zai-org GLM 5.1 is quite capable.
+## Current build
 
-## Quick Start
+- Version: `666.0.0-V666`
+- Isolated config directory: `~/.claude-666`
+- Preferred global command: `ccb666`
+- Compatible launchers: `claude-code-codex`, `claude-code-v666`
 
-### Prerequisites
+## Project structure
 
-Make sure you're on the latest version of Bun, otherwise you'll run into all sorts of weird bugs. Run `bun upgrade`!
+The directories and files most relevant to this branch are:
 
-- [Bun](https://bun.sh/) >= 1.3.11
-- Standard Claude Code configuration — each provider has its own setup method
+- `src/entrypoints/cli.tsx`
+  Startup entrypoint. This is where the `666` build bootstraps an isolated config directory and seeds the default `Codex CLI + gpt-5.4` settings.
+- `src/services/api/openai/`
+  OpenAI-compatible routing lives here. This branch adds `codexCli.ts` to bridge the official `codex` command into the existing request flow.
+- `src/components/ConsoleOAuthFlow.tsx`
+  `/login` UI flow. This is where the `Codex / ChatGPT OAuth` option was added.
+- `src/utils/model/` and `src/utils/logoV2Utils.ts`
+  Model display and provider labels. This branch adjusts the UI to show `GPT-5.4` and `ChatGPT OAuth (Codex CLI)`.
+- `src/utils/messages.ts` and `src/screens/REPL.tsx`
+  Stream handling and terminal UI. This is where reconnect progress is surfaced to the user.
+- `scripts/install-global-launchers.ps1`
+  Windows launcher installer for `ccb666`, `claude-code-codex`, and `claude-code-v666`.
+- `README.md` / `README_EN.md`
+  Branch-specific documentation.
 
-### Install
+## Main differences from the base repository
+
+At a high level, this branch adds:
+
+- A `Codex CLI` backend bridge
+  Main file: `src/services/api/openai/codexCli.ts`
+- A `Codex CLI` execution path inside the OpenAI provider
+  Main file: `src/services/api/openai/index.ts`
+- `/login -> Codex / ChatGPT OAuth`
+  Main file: `src/components/ConsoleOAuthFlow.tsx`
+- An isolated `666` config/bootstrap path
+  Main files: `src/entrypoints/cli.tsx`, `src/utils/envUtils.ts`, `src/utils/settings/settings.ts`
+- Correct model/provider display updates
+  Main files: `src/utils/model/model.ts`, `src/utils/logoV2Utils.ts`
+- Reconnect progress feedback in the terminal UI
+  Main files: `src/utils/messages.ts`, `src/screens/REPL.tsx`
+- Windows global launch commands
+  Main files: `package.json`, `scripts/install-global-launchers.ps1`, `scripts/defines.ts`
+
+## How it works
+
+This ChatGPT route is not API-key based and does not scrape browser cookies.
+
+The flow is:
+
+- Log into ChatGPT with the official `codex login`
+- This project invokes the local `codex` binary
+- Authentication remains managed by the official `Codex CLI`
+- This repository only bridges that model backend into the Claude Code-style shell
+
+As a result:
+
+- `OPENAI_API_KEY` is not required for this path
+- ChatGPT cookies are not stored in this repository
+- Browser sessions are not stored in this repository
+- The login state is not written into project source files
+
+## Requirements
+
+- [Bun](https://bun.sh/) >= `1.3.11`
+- Official `Codex CLI` available on the local machine
+
+Make sure Codex is logged in first:
+
+```bash
+codex login
+codex login status
+```
+
+Continue only after you see `Logged in using ChatGPT`.
+
+If you have already logged into the official Codex tooling in VS Code, a VS Code terminal, or another local environment, and `codex login status` shows that you are logged in, this branch can reuse that same local login state directly.
+
+## Install and build
+
+From the repository root:
 
 ```bash
 bun install
-```
-
-### Run
-
-```bash
-# Dev mode — if you see version 888, it's working
-bun run dev
-
-# Build
 bun run build
+bun run install:launcher
 ```
 
-The build uses code splitting (`build.ts`), outputting to `dist/` (entry `dist/cli.js` + ~450 chunk files).
-
-The build output runs on both Bun and Node.js — you can publish to a private registry and run directly.
-
-If you encounter a bug, please open an issue — we'll prioritize it.
-
-### First-time Setup /login
-
-After the first run, enter `/login` in the REPL to access the login configuration screen. Select **Anthropic Compatible** to connect to third-party API-compatible services (no Anthropic account required).
-
-Fields to fill in:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| Base URL | API service URL | `https://api.example.com/v1` |
-| API Key | Authentication key | `sk-xxx` |
-| Haiku Model | Fast model ID | `claude-haiku-4-5-20251001` |
-| Sonnet Model | Balanced model ID | `claude-sonnet-4-6` |
-| Opus Model | High-performance model ID | `claude-opus-4-6` |
-
-- **Tab / Shift+Tab** to switch fields, **Enter** to confirm and move to the next, press Enter on the last field to save
-- Model fields auto-fill from current environment variables
-- Configuration saves to `~/.claude/settings.json` under the `env` key, effective immediately
-
-You can also edit `~/.claude/settings.json` directly:
-
-```json
-{
-  "env": {
-    "ANTHROPIC_BASE_URL": "https://api.example.com/v1",
-    "ANTHROPIC_AUTH_TOKEN": "sk-xxx",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5-20251001",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6"
-  }
-}
-```
-
-> Supports all Anthropic API-compatible services (e.g., OpenRouter, AWS Bedrock proxies, etc.) as long as the interface is compatible with the Messages API.
-
-## Feature Flags
-
-All feature toggles are enabled via `FEATURE_<FLAG_NAME>=1` environment variables, for example:
+After that, you can start it from any directory:
 
 ```bash
-FEATURE_BUDDY=1 FEATURE_FORK_SUBAGENT=1 bun run dev
+ccb666
 ```
 
-See [`docs/features/`](docs/features/) for detailed descriptions of each feature. Contributions welcome.
+Alternative commands:
 
-## VS Code Debugging
+```bash
+claude-code-codex
+claude-code-v666
+```
 
-The TUI (REPL) mode requires a real terminal and cannot be launched directly via VS Code's launch config. Use **attach mode**:
+## First-time setup
 
-### Steps
+1. Start `ccb666`
+2. Run `/login`
+3. Choose `Codex / ChatGPT OAuth`
+4. If login is missing, run `codex login` in another terminal first
 
-1. **Start inspect server in terminal**:
-   ```bash
-   bun run dev:inspect
-   ```
-   This outputs an address like `ws://localhost:8888/xxxxxxxx`.
+This branch uses:
 
-2. **Attach debugger from VS Code**:
-   - Set breakpoints in `src/` files
-   - Press F5 → select **"Attach to Bun (TUI debug)"**
+```text
+~/.claude-666
+```
 
-## Documentation & Links
+It does not overwrite the original:
 
-- **Online docs (Mintlify)**: [ccb.agent-aura.top](https://ccb.agent-aura.top/) — source in [`docs/`](docs/), PR contributions welcome
-- **DeepWiki**: <https://deepwiki.com/claude-code-best/claude-code>
+```text
+~/.claude
+```
 
-## Contributors
+## Smoke test
 
-<a href="https://github.com/claude-code-best/claude-code/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=claude-code-best/claude-code" />
-</a>
+```bash
+ccb666 --print "Reply with exactly OK"
+```
 
-## Star History
+Expected output:
 
-<a href="https://www.star-history.com/?repos=claude-code-best%2Fclaude-code&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=claude-code-best%2Fclaude-code&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=claude-code-best%2Fclaude-code&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=claude-code-best%2Fclaude-code&type=date&legend=top-left" />
- </picture>
-</a>
+```text
+OK
+```
 
-## License
+## Runtime notes
 
-This project is for educational and research purposes only. All rights to Claude Code belong to [Anthropic](https://www.anthropic.com/).
+Codex may reconnect multiple times before returning a final answer. This branch now shows progress such as:
+
+```text
+Connecting to ChatGPT OAuth...
+Codex reconnecting 1/5...
+Codex reconnecting 2/5...
+Codex falling back to HTTP...
+```
+
+So the UI no longer appears frozen during that wait.
+
+## Open-source hygiene
+
+Temporary local folders are already ignored:
+
+- `.tmp-codex-cli/`
+- `.tmp-codex-inspect/`
+
+Before open-sourcing, do not commit:
+
+- `~/.codex/`
+- `~/.claude/`
+- `~/.claude-666/`
+- any exported cookie, token, or session files
+
+One extra note:
+
+- `.vscode/launch.json` should not keep a machine-local Bun inspector URL. The repository copy has been sanitized to `ws://localhost:8888/replace-me`.
+
+I also re-checked a few tracked areas:
+
+- `node_modules/`, `dist/`, `.env`, `.tmp-codex-cli/`, and `.tmp-codex-inspect/` are already ignored
+- `.claude/agents/hello-agent.md` currently looks like a sample agent file, not a secret
+- `.vscode/tasks.json` is generic and fine to publish
+- `.vscode/launch.json` previously contained a local debug URL and has now been de-localized
+
+## Disclaimer
+
+This project is for learning, research, and personal engineering experiments only.
+
+Claude Code related rights belong to their original owners. The customizations here are specific to this branch. 

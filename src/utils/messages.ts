@@ -2975,6 +2975,7 @@ export function handleMessageFromStream(
   ) => void,
   onApiMetrics?: (metrics: { ttftMs: number }) => void,
   onStreamingText?: (f: (current: string | null) => string | null) => void,
+  onSetSpinnerMessage?: (message: string | null) => void,
 ): void {
   if (
     message.type !== 'stream_event' &&
@@ -3028,13 +3029,26 @@ export function handleMessageFromStream(
   }
 
   if (streamMsg.event.type === 'message_stop') {
+    onSetSpinnerMessage?.(null)
     onSetStreamMode('tool-use')
     onStreamingToolUses(() => [])
     return
   }
 
   switch (streamMsg.event.type) {
+    case 'codex_cli_status':
+      onSetStreamMode('responding')
+      onSetSpinnerMessage?.(
+        typeof streamMsg.event.message === 'string'
+          ? streamMsg.event.message
+          : null,
+      )
+      return
+    case 'codex_cli_status_clear':
+      onSetSpinnerMessage?.(null)
+      return
     case 'content_block_start':
+      onSetSpinnerMessage?.(null)
       onStreamingText?.(() => null)
       if (
         feature('CONNECTOR_TEXT') &&
